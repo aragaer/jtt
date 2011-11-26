@@ -43,7 +43,7 @@ def main():
     (lat, lng) = latlong()
     obs.lat = lat
     obs.long = lng
-#    obs.horizon = -6 # civilian
+    obs.horizon = '-6' # civilian
     sun = ephem.Sun()
     prev_rise = obs.previous_rising(sun)
     prev_set = obs.previous_setting(sun)
