@@ -21,26 +21,21 @@ def hour_to_strike(hour):
         return 12 - hour
 
 def calc_jtt(start, end, now):
-    now = ephem.localtime(now)
-    l_end = ephem.localtime(end)
-    l_start = ephem.localtime(start)
-    hlen = (l_end - l_start).seconds/6.0
-    tnow = (now - l_start).seconds
-
-#    print "Start at %s, end at %s" % (l_start.ctime(), l_end.ctime())
-#    print "It is %s now" % now.ctime()
-#    print "It is %f of time of day now" % ((now - l_start).seconds/hlen)
+    now = now.datetime()
+    end = end.datetime()
+    start = start.datetime()
+    hlen = (end - start).seconds/6.0
+    tnow = (now - start).seconds
 
     return tnow/hlen
 
 def calc_rev_jtt(start, end, num, frac):
-    l_start = start.datetime()
-    l_end = end.datetime()
-    hlen = (l_end - l_start).seconds/6.0
-    print "Hour length is", hlen, "seconds"
-    for i in range (0,6):
-        print "Hour %d - %s" % (i, ephem.Date(l_start + datetime.timedelta(seconds=int(hlen*i))))
-    return l_start + datetime.timedelta(seconds=int(hlen*(num + frac)))
+    start = start.datetime()
+    end = end.datetime()
+    hlen = (end - start).seconds/6.0
+    tnow = int(hlen*(num + frac))
+
+    return ephem.Date(start + datetime.timedelta(seconds=tnow))
 
 def time_to_jtt(time = None, obs = None):
     if obs is None:
@@ -81,17 +76,21 @@ def jtt_to_time(hour_str, frac = 0, date = None, obs = None):
     t_obs.date = ephem.Date(date)
     sun = ephem.Sun()
 
-    print "jtt to time for hour %s (%f) date %s " % (hour_str, frac, date.strftime("%d %h %Y"))
+#    print "jtt to time for hour %s (%f) date %s " % (hour_str, frac, date.strftime("%d %h %Y"))
 #    print "We're dancing from time %s" % date.strftime("%H:%M:%S") # should be 00:00:00
     (hour, is_night) = hours[hour_str]
-    if is_night and hour >= 3:      # it's in the morning
+    if is_night:
+        if hour < 3: # evening, move to next midnight
+            t_obs.date = ephem.Date(date + datetime.timedelta(days=1))
         next_rise = t_obs.next_rising(sun)
         prev_set = t_obs.previous_setting(sun)
         result = calc_rev_jtt(prev_set, next_rise, hour, frac)
+    else:
+        prev_rise = t_obs.previous_rising(sun)
+        next_set = t_obs.next_setting(sun)
+        result = calc_rev_jtt(prev_rise, next_set, hour, frac)
 
-    print result
-    print "The result is %s" % result
-    return result
+    return ephem.localtime(result)
 
 def latlong():
     data = urllib2.urlopen("http://j.maxmind.com/app/geoip.js").readlines()
@@ -118,8 +117,9 @@ def main():
     print "It is hour of %s (%d strikes, %d%%) now" % (hnames[hour],
         hour_to_strike(hour), frac*100)
 
-    time = jtt_to_time("Tiger")
-    print "On day %s in hour %s the time is %s" % (datetime.datetime.now().date(), "Tiger", time.strftime("%H:%M:%S"))
+    tomorrow = datetime.datetime.now() + datetime.timedelta(days=1)
+    time = jtt_to_time("Tiger", 0, tomorrow)
+    print "On day %s in hour of %s the time is %s" % (tomorrow.strftime("%d %h %Y"), "Tiger", time.strftime("%H:%M:%S"))
 
 init_local()
 if __name__ == "__main__":
