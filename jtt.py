@@ -86,7 +86,7 @@ def jtt_to_time(hour_str, frac = 0, date = None, obs = None):
         prev_set = t_obs.previous_setting(sun)
         result = calc_rev_jtt(prev_set, next_rise, hour, frac)
     else:
-        prev_rise = t_obs.previous_rising(sun)
+        prev_rise = t_obs.next_rising(sun)
         next_set = t_obs.next_setting(sun)
         result = calc_rev_jtt(prev_rise, next_set, hour, frac)
 
