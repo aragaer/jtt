@@ -109,7 +109,19 @@ def init_local():
     (lat, lon) = latlong()
     l_obs.lat = lat
     l_obs.lon = lon
-    l_obs.horizon = '-6'
+    l_obs.horizon = '-0.8333'
+
+(alarm_hour, alarm_frac) = ("Tiger", 0)
+def alarm():
+    now = datetime.datetime.now()
+    tomorrow = now + datetime.timedelta(days=1)
+    sunrise = jtt_to_time("Hare", 0, now)
+    if now < sunrise:
+        day = now
+    else:
+        day = tomorrow
+    alarm = jtt_to_time(alarm_hour, alarm_frac, day)
+    print "On day %s in hour of %s the time is %s" % (day.strftime("%d %h %Y"), alarm_hour, alarm.strftime("%H:%M:%S"))
 
 def main():
     (frac, hour, is_night) = time_to_jtt()
@@ -117,9 +129,7 @@ def main():
     print "It is hour of %s (%d strikes, %d%%) now" % (hnames[hour],
         hour_to_strike(hour), frac*100)
 
-    tomorrow = datetime.datetime.now() + datetime.timedelta(days=1)
-    time = jtt_to_time("Tiger", 0, tomorrow)
-    print "On day %s in hour of %s the time is %s" % (tomorrow.strftime("%d %h %Y"), "Tiger", time.strftime("%H:%M:%S"))
+    alarm()
 
 init_local()
 if __name__ == "__main__":
